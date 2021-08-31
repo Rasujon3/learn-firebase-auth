@@ -20,7 +20,9 @@ function App() {
     name: '',
     email: '',
     password: '',
-    photo: ''
+    photo: '',
+    error:'',
+    success:false
 
   })
 
@@ -51,7 +53,8 @@ function App() {
         isSignedIn:false,
         name:'',
         email:'',
-        photo:''
+        photo:'',
+       
       }
       setUser(signedOutUser);
     }).catch(err => {
@@ -59,26 +62,53 @@ function App() {
     });
   }
 
-  const handleSubmit=()=>{
-
-  }
 
   const handleBlur=(e)=>{
-    let isFormValid = true;
+    let isFieldValid = true;
     if (e.target.name === 'email') {
-      isFormValid = /\S+@\S+\.\S+/.test(e.target.value);
+      isFieldValid = /\S+@\S+\.\S+/.test(e.target.value);
     }
     if (e.target.name === 'password') {
       const isPasswordValid = e.target.value.length > 6;
       const isPasswordHasNumber = /\d{1}/.test(e.target.value);
-      isFormValid = isPasswordValid && isPasswordHasNumber;
+      isFieldValid = isPasswordValid && isPasswordHasNumber;
     }
-    if(isFormValid){
+    if(isFieldValid){
       // [...cart,newItem]
       const newUserInfo = {...user};
       newUserInfo[e.target.name] = e.target.value;
       setUser(newUserInfo);
     }
+  }
+
+  
+  const handleSubmit=(e)=>{
+    // console.log(user.email, user.password);
+    if (user.email && user.password) {
+      firebase.auth().createUserWithEmailAndPassword(user.email, user.password)
+  .then(res => {
+    // Signed in 
+    const newUserInfo = {...user};
+    newUserInfo.error = '';
+    newUserInfo.success = true;
+    setUser(newUserInfo);
+    console.log(res);
+    // var user = res.user;
+    // ...
+  })
+  .catch(error => {
+    const newUserInfo = {...user};
+    newUserInfo.error = error.message;
+    newUserInfo.success = false;
+
+    setUser(newUserInfo);
+
+    var errorCode = error.code;
+    var errorMessage = error.message;
+    console.log(errorCode,errorMessage);
+  });
+    }
+    e.preventDefault();
   }
 
   return (
@@ -99,19 +129,19 @@ function App() {
       }
 
       <h1>Our own Authentication</h1>
-      <p>Name : {user.name}</p>
-      <p>Email : {user.email}</p>
-      <p>Pass : {user.password}</p>
       <form onSubmit={handleSubmit}>
-        <input type="text" name="name" onBlur={handleBlur} placeholder="Your name" />
-        <br />
+          <input type="text" name="name" onBlur={handleBlur} placeholder="Your name" />
+          <br />
           <input type="text" name="email" onBlur={handleBlur} placeholder="Your Email Address" required />
           <br />
           <input type="password" onBlur={handleBlur} name="password" id="" placeholder="Your Password" required />
           <br />
           <input type="submit" value="Submit" />
       </form>
-
+      <p style={{color:'red'}}>{user.error}</p>
+      {
+        user.success && <p style={{color:'green'}}>User created successfully</p>
+      }
     </div>
   );
 }
